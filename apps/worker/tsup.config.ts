@@ -11,4 +11,6 @@ export default defineConfig({
   sourcemap: true,
   noExternal: [/^@integris\//],
   external: ["@prisma/client", ".prisma/client"],
+  // Workspace deps (pino, zod) are bundled; give their CommonJS code a require().
+  banner: { js: "import { createRequire } from \"node:module\"; const require = createRequire(import.meta.url);" },
 });

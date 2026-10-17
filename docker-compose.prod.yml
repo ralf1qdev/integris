@@ -1,0 +1,37 @@
+# Full stack on one host. Requires a populated .env (see docs/DEPLOYMENT.md).
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+x-app: &app
+  env_file: .env
+  restart: unless-stopped
+  environment:
+    NODE_ENV: production
+    DATABASE_URL: postgresql://integris:integris@postgres:5432/integris
+    REDIS_URL: redis://redis:6379
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+
+services:
+  migrate:
+    <<: *app
+    build: { context: ., target: migrate }
+    restart: "no"
+
+  web:
+    <<: *app
+    build: { context: ., target: web }
+    ports: ["3000:3000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  worker:
+    <<: *app
+    build: { context: ., target: worker }
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+
+  bot:
+    <<: *app
+    build: { context: ., target: bot }
+    depends_on:
+      migrate: { condition: service_completed_successfully }
