@@ -13,8 +13,8 @@ export default async function GuildLayout({ children, params }: { children: Reac
   const openAlerts = await db.securityAlert.count({ where: { guildId, status: "OPEN" } });
 
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[220px_1fr] lg:gap-10 lg:py-10">
-      <aside className="lg:sticky lg:top-24 lg:self-start">
+    <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)] gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10 lg:py-10">
+      <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
         <div className="mb-4 flex items-center gap-3 px-1">
           <Avatar src={guildIconUrl(gate.guild.id, gate.guild.icon, 64)} alt="" fallback={initials(gate.guild.name)} className="size-9 rounded-lg" />
           <div className="min-w-0">

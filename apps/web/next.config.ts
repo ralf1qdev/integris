@@ -2,8 +2,9 @@ import { loadEnvConfig } from "@next/env";
 import type { NextConfig } from "next";
 import { resolve } from "node:path";
 
-// All apps share the repository-root .env.
-loadEnvConfig(resolve(process.cwd(), "../.."));
+// All apps share the repository-root .env. Next has already loaded apps/web/.env*
+// and caches that result, so force a reload from the root (real env vars still win).
+loadEnvConfig(resolve(process.cwd(), "../.."), process.env.NODE_ENV !== "production", undefined, true);
 
 const isDev = process.env.NODE_ENV !== "production";
 

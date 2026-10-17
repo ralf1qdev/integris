@@ -74,7 +74,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ guild
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,340px)_1fr]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,340px)_minmax(0,1fr)]">
             <Card className="flex flex-col items-center p-6 text-center sm:flex-row sm:text-left lg:flex-col lg:text-center">
               <ScoreRing score={o.score.score} status={o.score.status} />
               <div className="mt-4 sm:ml-6 sm:mt-0 lg:ml-0 lg:mt-5">
@@ -107,7 +107,7 @@ export default async function OverviewPage({ params }: { params: Promise<{ guild
             <ActivityChart guildId={guildId} />
           </div>
 
-          <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          <div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-2">
             <Card>
               <CardHeader>
                 <div>

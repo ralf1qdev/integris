@@ -6,7 +6,7 @@ import { env } from "./env";
 const g = globalThis as unknown as { __integrisRedis?: Redis };
 
 export function redis(): Redis {
-  g.__integrisRedis ??= new Redis({ ...parseRedisUrl(env().REDIS_URL), maxRetriesPerRequest: 2, enableOfflineQueue: false, lazyConnect: false });
+  g.__integrisRedis ??= new Redis({ ...parseRedisUrl(env().REDIS_URL), maxRetriesPerRequest: 2, connectTimeout: 5_000 });
   return g.__integrisRedis;
 }
 

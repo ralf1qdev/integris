@@ -113,7 +113,7 @@ export default async function BotDetailPage({ params }: { params: Promise<{ guil
         </p>
       ) : null}
 
-      <div className="grid gap-4 xl:grid-cols-[1fr_360px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-4">
           <Card>
             <CardHeader>
@@ -176,9 +176,14 @@ export default async function BotDetailPage({ params }: { params: Promise<{ guil
                           </span>
                         </div>
                         <p className="mt-1 text-xs text-muted">
-                          {d.gained?.length ? <span className="text-warning">+ {d.gained.join(", ")} </span> : null}
-                          {d.lost?.length ? <span className="text-healthy">− {d.lost.join(", ")} </span> : null}
-                          {d.cause ? <span>· {d.cause}</span> : null} · Actor: {e.actorName ?? "Unknown"}
+                          {[
+                            d.gained?.length ? <span key="g" className="text-warning">+ {d.gained.join(", ")}</span> : null,
+                            d.lost?.length ? <span key="l" className="text-healthy">− {d.lost.join(", ")}</span> : null,
+                            d.cause ? <span key="c">{d.cause}</span> : null,
+                            <span key="a">Actor: {e.actorName ?? "Unknown"}</span>,
+                          ]
+                            .filter(Boolean)
+                            .flatMap((node, i) => (i ? [<span key={`s${i}`}> · </span>, node] : [node]))}
                         </p>
                       </li>
                     );

@@ -95,7 +95,7 @@ export default async function WebhooksPage({ params }: { params: Promise<{ guild
                 <Th className="hidden md:table-cell">Creator</Th>
                 <Th>Status</Th>
                 <Th className="hidden lg:table-cell">First detected</Th>
-                <Th className="hidden xl:table-cell">Last change</Th>
+                <Th className="hidden 2xl:table-cell">Last change</Th>
                 <Th className="text-right">Actions</Th>
               </tr>
             </thead>
@@ -119,17 +119,17 @@ export default async function WebhooksPage({ params }: { params: Promise<{ guild
                       {w.channelId && restricted.has(w.channelId) ? <span className="ml-2 text-[11px] text-warning">Restricted</span> : null}
                       <span className="block text-[11px] text-subtle">{WEBHOOK_TYPE_LABELS[w.type] ?? "Unknown type"}</span>
                     </Td>
-                    <Td className="hidden text-muted md:table-cell">
+                    <Td className="hidden whitespace-nowrap text-muted md:table-cell">
                       {w.creatorName ?? "Unknown"}
                       {w.creatorIsBot ? <span className="ml-1.5 text-[11px] text-subtle">(bot)</span> : null}
                     </Td>
                     <Td>
                       <TrustBadge trusted={Boolean(t)} protectedHook={t?.protected} />
                     </Td>
-                    <Td className="hidden text-muted lg:table-cell" title={formatDateTime(w.firstSeenAt)}>
+                    <Td className="hidden whitespace-nowrap text-muted lg:table-cell" title={formatDateTime(w.firstSeenAt)}>
                       {timeAgo(w.firstSeenAt)}
                     </Td>
-                    <Td className="hidden text-muted xl:table-cell">{w.lastChangedAt ? `${w.lastChangeSummary ?? "Changed"} · ${timeAgo(w.lastChangedAt)}` : "No changes observed"}</Td>
+                    <Td className="hidden text-muted 2xl:table-cell">{w.lastChangedAt ? `${w.lastChangeSummary ?? "Changed"} · ${timeAgo(w.lastChangedAt)}` : "No changes observed"}</Td>
                     <Td>
                       <div className="flex justify-end gap-1">
                         <TrustControl guildId={guildId} kind="WEBHOOK" targetId={w.webhookId} name={name} trusted={Boolean(t)} isProtected={t?.protected} size="sm" />

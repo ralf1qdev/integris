@@ -91,29 +91,27 @@ export default function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6" aria-labelledby="features">
-        <FadeIn>
+        <div>
           <p className="text-sm font-medium text-secondary">Built for integrations</p>
           <h2 id="features" className="mt-2 max-w-2xl text-3xl font-semibold tracking-tight">Not another moderation bot. A security layer for everything you've connected.</h2>
-        </FadeIn>
+        </div>
         <div className="mt-12 grid gap-4 md:grid-cols-3">
-          {FEATURES.map((f, i) => (
-            <FadeIn key={f.title} delay={i * 0.06}>
-              <div className="card h-full p-6">
-                <div className="grid size-10 place-items-center rounded-lg border border-primary/25 bg-primary/10">
-                  <f.icon className="size-5 text-secondary" />
-                </div>
-                <h3 className="mt-5 text-lg font-semibold tracking-tight">{f.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted">{f.body}</p>
-                <ul className="mt-5 space-y-2">
-                  {f.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-sm">
-                      <Check className="mt-0.5 size-4 shrink-0 text-healthy" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
+          {FEATURES.map((f) => (
+            <div key={f.title} className="card h-full p-6">
+              <div className="grid size-10 place-items-center rounded-lg border border-primary/25 bg-primary/10">
+                <f.icon className="size-5 text-secondary" />
               </div>
-            </FadeIn>
+              <h3 className="mt-5 text-lg font-semibold tracking-tight">{f.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted">{f.body}</p>
+              <ul className="mt-5 space-y-2">
+                {f.points.map((p) => (
+                  <li key={p} className="flex items-start gap-2 text-sm">
+                    <Check className="mt-0.5 size-4 shrink-0 text-healthy" />
+                    {p}
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
         </div>
       </section>

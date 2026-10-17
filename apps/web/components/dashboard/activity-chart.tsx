@@ -3,7 +3,7 @@
 import { ACTIVITY_RANGES, type ActivityRange } from "@integris/shared";
 import { Activity } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/client-api";
 import { cn } from "@/lib/utils";
@@ -73,28 +73,19 @@ export function ActivityChart({ guildId }: { guildId: string }) {
           <EmptyState icon={Activity} title="No activity in this period" description="Events appear here as Integris observes bot, role and webhook changes." />
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={points} margin={{ top: 8, right: 12, left: -18, bottom: 0 }}>
-              <defs>
-                <linearGradient id="ev" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#5865F2" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#5865F2" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="al" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#F59E0B" stopOpacity={0} />
-                </linearGradient>
-              </defs>
+            <BarChart data={points} margin={{ top: 8, right: 12, left: -18, bottom: 0 }} barGap={2}>
               <CartesianGrid stroke="#222937" strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="bucket" tickFormatter={(v: string) => tick(range, v)} stroke="#5C6479" fontSize={11} tickLine={false} axisLine={false} minTickGap={24} />
               <YAxis allowDecimals={false} stroke="#5C6479" fontSize={11} tickLine={false} axisLine={false} />
               <Tooltip
                 contentStyle={{ background: "#11151D", border: "1px solid #222937", borderRadius: 10, fontSize: 12 }}
                 labelFormatter={(v) => tick(range, String(v))}
-                cursor={{ stroke: "#2E3647" }}
+                cursor={{ fill: "rgb(255 255 255 / 0.03)" }}
               />
-              <Area type="monotone" dataKey="events" name="Events" stroke="#818CF8" strokeWidth={2} fill="url(#ev)" />
-              <Area type="monotone" dataKey="alerts" name="Alerts" stroke="#F59E0B" strokeWidth={2} fill="url(#al)" />
-            </AreaChart>
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "#8B93A7" }} />
+              <Bar dataKey="events" name="Events" fill="#818CF8" radius={[3, 3, 0, 0]} maxBarSize={18} />
+              <Bar dataKey="alerts" name="Alerts" fill="#F59E0B" radius={[3, 3, 0, 0]} maxBarSize={18} />
+            </BarChart>
           </ResponsiveContainer>
         )}
       </div>
