@@ -8,7 +8,8 @@
     "./env": "./src/env.ts",
     "./logger": "./src/logger.ts",
     "./queue": "./src/queue.ts",
-    "./embeds": "./src/embeds.ts"
+    "./embeds": "./src/embeds.ts",
+    "./heartbeat": "./src/heartbeat.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",

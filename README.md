@@ -47,6 +47,7 @@ apps/
     test/               API authorization & isolation tests
   bot/                  discord.js client, Gateway handlers, slash commands, alert buttons
   worker/               BullMQ processors: scan, events, alerts, maintenance
+  community/            separate bot for the official community server: welcome, suggestions, tickets, /post
 packages/
   shared/               enums, Zod schemas, queue contracts, redaction, Discord embeds
   security/             permission engine, bot/webhook rules, escalation, security score
@@ -90,6 +91,7 @@ Integration tests (`packages/database`, `apps/worker`, `apps/web`) need `DATABAS
 * [Deployment](docs/DEPLOYMENT.md)
 * [Security model, rules and score](docs/SECURITY_MODEL.md)
 * [Architecture details](docs/ARCHITECTURE.md)
+* [Community server bot](docs/COMMUNITY_SERVER.md)
 
 ## Limitations
 

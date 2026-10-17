@@ -11,3 +11,4 @@ export * from "./repositories/trust";
 export * from "./repositories/scans";
 export * from "./repositories/overview";
 export * from "./repositories/retention";
+export * from "./repositories/community";

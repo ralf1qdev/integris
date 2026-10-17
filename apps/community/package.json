@@ -1,0 +1,26 @@
+{
+  "name": "@integris/community",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsup",
+    "register-commands": "tsx src/register.ts",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@integris/database": "workspace:*",
+    "@integris/shared": "workspace:*",
+    "@prisma/client": "6.19.3",
+    "discord.js": "^14.27.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "vitest": "^3.2.7"
+  }
+}

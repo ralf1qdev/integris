@@ -1,4 +1,5 @@
 import { Worker, type Job } from "bullmq";
+import { HEARTBEAT_INTERVAL_MS, HEARTBEAT_TTL_SECONDS, heartbeatKey, type Heartbeat } from "@integris/shared/heartbeat";
 import { QUEUES } from "@integris/shared/queue";
 import { env } from "./env";
 import { getSelf } from "./discord";
@@ -33,8 +34,17 @@ async function main() {
   await maintenanceQueue.upsertJobScheduler("schedule-scans", { every: env.SCAN_INTERVAL_MINUTES * 60_000 }, { name: "schedule-scans", data: { type: "schedule-scans" } });
   await maintenanceQueue.upsertJobScheduler("retention", { pattern: "17 3 * * *" }, { name: "retention", data: { type: "retention" } });
 
+  const beat = () =>
+    redis
+      .setex(heartbeatKey("worker"), HEARTBEAT_TTL_SECONDS, JSON.stringify({ at: new Date().toISOString() } satisfies Heartbeat))
+      .catch((err) => log.warn({ err }, "heartbeat failed"));
+  void beat();
+  const heartbeat = setInterval(beat, HEARTBEAT_INTERVAL_MS);
+
   const shutdown = async (signal: string) => {
     log.info({ signal }, "worker shutting down");
+    clearInterval(heartbeat);
+    await redis.del(heartbeatKey("worker")).catch(() => {});
     await Promise.allSettled(workers.map((w) => w.close()));
     await maintenanceQueue.close();
     await db.$disconnect();

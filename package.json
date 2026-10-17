@@ -1,13 +1,13 @@
 {
   "name": "integris",
   "private": true,
-  "description": "Integris — security for everything connected to your Discord.",
+  "description": "Integris \u2014 security for everything connected to your Discord.",
   "packageManager": "pnpm@10.28.0",
   "engines": {
     "node": ">=20.11"
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev": "pnpm --parallel --filter @integris/web --filter @integris/bot --filter @integris/worker dev",
     "dev:web": "pnpm --filter @integris/web dev",
     "dev:bot": "pnpm --filter @integris/bot dev",
     "dev:worker": "pnpm --filter @integris/worker dev",
@@ -19,7 +19,9 @@
     "db:generate": "pnpm --filter @integris/database generate",
     "db:migrate": "pnpm --filter @integris/database migrate:dev",
     "db:deploy": "pnpm --filter @integris/database migrate:deploy",
-    "commands:register": "pnpm --filter @integris/bot register-commands"
+    "commands:register": "pnpm --filter @integris/bot register-commands",
+    "dev:community": "pnpm --filter @integris/community dev",
+    "community:register": "pnpm --filter @integris/community register-commands"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

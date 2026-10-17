@@ -3,7 +3,7 @@ import { Logo } from "@/components/brand/logo";
 
 const COLUMNS = [
   { title: "Product", links: [["Features", "/features"], ["Pricing", "/pricing"], ["Dashboard", "/dashboard"]] },
-  { title: "Resources", links: [["Documentation", "/docs"], ["Security model", "/docs#security-score"], ["Limitations", "/docs#limitations"]] },
+  { title: "Resources", links: [["Documentation", "/docs"], ["Security model", "/docs#security-score"], ["Limitations", "/docs#limitations"], ["Status", "/status"]] },
   { title: "Trust", links: [["Data & privacy", "/docs#privacy"], ["Permissions", "/docs#permissions"], ["Delete your data", "/docs#data-deletion"]] },
 ] as const;
 

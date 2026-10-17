@@ -1,4 +1,5 @@
 import { Queue } from "bullmq";
+import { Redis } from "ioredis";
 import { getPrisma } from "@integris/database";
 import { createLogger } from "@integris/shared/logger";
 import { DEFAULT_JOB_OPTIONS, jobId, parseRedisUrl, QUEUES, type GatewaySignal, type ScanJobData } from "@integris/shared/queue";
@@ -9,6 +10,8 @@ export const db = getPrisma();
 
 const connection = parseRedisUrl(env.REDIS_URL);
 export const scanQueue = new Queue<ScanJobData>(QUEUES.scan, { connection, defaultJobOptions: DEFAULT_JOB_OPTIONS });
+/** Plain connection for non-queue keys (heartbeats). */
+export const redis = new Redis({ ...connection, maxRetriesPerRequest: 2 });
 export const eventQueue = new Queue<GatewaySignal>(QUEUES.events, { connection, defaultJobOptions: DEFAULT_JOB_OPTIONS });
 
 export async function enqueueScan(data: ScanJobData) {

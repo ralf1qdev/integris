@@ -3,6 +3,7 @@
 #   docker build --target web    -t integris-web .
 #   docker build --target bot    -t integris-bot .
 #   docker build --target worker -t integris-worker .
+#   docker build --target community -t integris-community .
 
 FROM node:22-bookworm-slim AS base
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
@@ -15,6 +16,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY apps/web/package.json apps/web/
 COPY apps/bot/package.json apps/bot/
 COPY apps/worker/package.json apps/worker/
+COPY apps/community/package.json apps/community/
 COPY packages/database/package.json packages/database/
 COPY packages/shared/package.json packages/shared/
 COPY packages/security/package.json packages/security/
@@ -22,7 +24,7 @@ COPY packages/database/prisma packages/database/prisma
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm --filter @integris/database generate \
- && pnpm --filter @integris/bot --filter @integris/worker build \
+ && pnpm --filter @integris/bot --filter @integris/worker --filter @integris/community build \
  && pnpm --filter @integris/web build
 
 FROM base AS runtime
@@ -42,6 +44,10 @@ CMD ["node", "dist/index.js"]
 
 FROM runtime AS worker
 WORKDIR /app/apps/worker
+CMD ["node", "dist/index.js"]
+
+FROM runtime AS community
+WORKDIR /app/apps/community
 CMD ["node", "dist/index.js"]
 
 # Applies database migrations, then exits. Run before starting a new release.

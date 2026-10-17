@@ -35,3 +35,11 @@ services:
     build: { context: ., target: bot }
     depends_on:
       migrate: { condition: service_completed_successfully }
+
+  # Only for the official Integris community server. Start with --profile community.
+  community:
+    <<: *app
+    build: { context: ., target: community }
+    profiles: ["community"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }

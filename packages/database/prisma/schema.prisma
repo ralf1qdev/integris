@@ -467,3 +467,30 @@ model DataDeletionLog {
 
   @@index([guildId])
 }
+
+// ───────────────────────── Community server (apps/community) ─────────────────────────
+
+enum TicketStatus {
+  OPEN
+  CLOSED
+}
+
+/// Support tickets opened in the official Integris community server. Not linked to
+/// Guild: the community bot is a separate application from the Integris product bot.
+model CommunityTicket {
+  id         String       @id @default(cuid())
+  guildId    String
+  number     Int
+  threadId   String       @unique
+  openerId   String
+  openerName String
+  category   String
+  subject    String
+  status     TicketStatus @default(OPEN)
+  createdAt  DateTime     @default(now())
+  closedAt   DateTime?
+  closedById String?
+
+  @@unique([guildId, number])
+  @@index([guildId, openerId, status])
+}
