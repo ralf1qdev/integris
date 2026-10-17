@@ -63,6 +63,16 @@ describe.skipIf(!hasTestDb)("guild data isolation", () => {
     expect(r).toEqual({ error: "UNKNOWN_CHANNEL" });
   });
 
+  it("rejects mention roles from another guild, @everyone and managed roles", async () => {
+    await db.guildRole.create({ data: { id: "777777777777777777", guildId: GUILD_B, name: "Staff", position: 1, permissions: "0" } });
+    await db.guildRole.create({ data: { id: GUILD_A, guildId: GUILD_A, name: "@everyone", position: 0, permissions: "0" } });
+    await db.guildRole.create({ data: { id: "888888888888888888", guildId: GUILD_A, name: "Bot", position: 2, permissions: "0", managed: true } });
+    const actor = { id: USER, name: null, source: "DASHBOARD" as const };
+    for (const roleId of ["777777777777777777", GUILD_A, "888888888888888888"]) {
+      expect(await updateSettings(db, GUILD_A, { alertMentionRoleId: roleId }, actor)).toEqual({ error: "UNKNOWN_ROLE" });
+    }
+  });
+
   it("keeps overview counts and event feeds per guild", async () => {
     await db.botInventory.create({ data: { guildId: GUILD_B, botUserId: "555555555555555555", username: "OtherBot" } });
     await recordEvent(db, GUILD_B, { type: "BOT_ADDED", source: "GATEWAY", summary: "x" });

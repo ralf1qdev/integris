@@ -184,7 +184,7 @@ export async function applyWebhooks(db: Db, guildId: string, current: SafeWebhoo
 
   for (const { finding, transition } of synced.upserted) {
     if (transition !== "created" && transition !== "reopened") continue;
-    if (createdIds.has(finding.targetId)) continue; // creation alert already covers it
+    if (!opts.baseline && createdIds.has(finding.targetId)) continue; // creation alert already covers it
     if (!severityAtLeast(finding.severity, opts.baseline ? "HIGH" : "MEDIUM")) continue;
     await emitAlert(
       db,
