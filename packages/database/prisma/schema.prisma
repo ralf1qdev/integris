@@ -1,0 +1,469 @@
+// Integris data model.
+// - Discord snowflakes are stored as strings.
+// - Every guild-scoped table carries guildId and cascades on guild deletion.
+// - Webhook tokens / URLs are never stored. OAuth tokens are AES-256-GCM encrypted.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Severity {
+  INFO
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum RiskLevel {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum FindingStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum ResourceType {
+  BOT
+  WEBHOOK
+  ROLE
+  CHANNEL
+  INTEGRATION
+  GUILD
+}
+
+enum IntegrationKind {
+  BOT
+  WEBHOOK
+}
+
+enum EventSource {
+  GATEWAY
+  AUDIT_LOG
+  RECONCILIATION
+  DASHBOARD
+  COMMAND
+  SYSTEM
+}
+
+enum AuditEventType {
+  BOT_ADDED
+  BOT_REMOVED
+  BOT_PERMISSIONS_CHANGED
+  ROLE_PERMISSIONS_CHANGED
+  PERMISSION_ESCALATION
+  WEBHOOK_CREATED
+  WEBHOOK_UPDATED
+  WEBHOOK_DELETED
+  WEBHOOK_DELETED_BY_INTEGRIS
+  INTEGRATION_CREATED
+  INTEGRATION_UPDATED
+  INTEGRATION_DELETED
+  ALERT_ACKNOWLEDGED
+  ALERT_RESOLVED
+  ALERT_REOPENED
+  FINDING_STATUS_CHANGED
+  TRUST_GRANTED
+  TRUST_REVOKED
+  NOTE_ADDED
+  SETTINGS_UPDATED
+  SCAN_COMPLETED
+  SCAN_FAILED
+  INTEGRIS_INSTALLED
+  INTEGRIS_REMOVED
+  DATA_DELETION_REQUESTED
+}
+
+enum ScanTrigger {
+  INSTALL
+  DASHBOARD
+  COMMAND
+  SCHEDULED
+  EVENT
+}
+
+enum ScanStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum WebhookStatus {
+  ACTIVE
+  DELETED
+}
+
+// ───────────────────────── Identity ─────────────────────────
+
+model User {
+  id         String   @id // Discord user ID
+  username   String
+  globalName String?
+  avatar     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  account  Account?
+  sessions Session[]
+  access   GuildAccess[]
+}
+
+/// Discord OAuth2 credentials. Tokens are encrypted at rest and never leave the server.
+model Account {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessTokenEnc    String
+  refreshTokenEnc   String
+  accessTokenExpiry DateTime
+  scope             String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+/// Server-side session. The cookie holds a random token; only its SHA-256 hash is stored.
+model Session {
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ───────────────────────── Guilds ─────────────────────────
+
+model Guild {
+  id             String    @id // Discord guild ID
+  name           String
+  icon           String?
+  ownerId        String?
+  botPresent     Boolean   @default(false)
+  installedAt    DateTime?
+  removedAt      DateTime?
+  lastSyncAt     DateTime?
+  lastSyncStatus ScanStatus?
+  lastSyncError  String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  settings  GuildSettings?
+  access    GuildAccess[]
+  channels  GuildChannel[]
+  roles     GuildRole[]
+  bots      BotInventory[]
+  webhooks  WebhookInventory[]
+  trusted   TrustedIntegration[]
+  notes     IntegrationNote[]
+  findings  SecurityFinding[]
+  alerts    SecurityAlert[]
+  events    AuditEvent[]
+  scans     ScanJob[]
+
+  @@index([botPresent])
+}
+
+/// Cached result of a server-side authorization check against Discord.
+/// The dashboard re-verifies with Discord once this is older than the configured TTL.
+model GuildAccess {
+  id          String   @id @default(cuid())
+  guildId     String
+  guild       Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permissions String // Discord permission bitfield, as reported by Discord to the server
+  isOwner     Boolean  @default(false)
+  canManage   Boolean  @default(false)
+  checkedAt   DateTime @default(now())
+
+  @@unique([guildId, userId])
+  @@index([userId])
+}
+
+model GuildSettings {
+  guildId                     String   @id
+  guild                       Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  monitoringEnabled           Boolean  @default(true)
+  alertChannelId              String?
+  alertMentionRoleId          String?
+  alertMinSeverity            Severity @default(MEDIUM)
+  alertCooldownMinutes        Int      @default(60)
+  alertOnBotJoin              Boolean  @default(true)
+  alertOnWebhookCreate        Boolean  @default(true)
+  alertOnWebhookDelete        Boolean  @default(true)
+  alertOnPermissionEscalation Boolean  @default(true)
+  restrictedChannelIds        String[] @default([])
+  retentionDays               Int      @default(90)
+  setupCompletedAt            DateTime?
+  updatedById                 String?
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+}
+
+/// Snapshot of channels from the latest scan (names, types, overwrites).
+model GuildChannel {
+  id                   String  @id // Discord channel ID
+  guildId              String
+  guild                Guild   @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name                 String
+  type                 Int
+  position             Int     @default(0)
+  parentId             String?
+  permissionOverwrites Json    @default("[]")
+  updatedAt            DateTime @updatedAt
+
+  @@index([guildId])
+}
+
+/// Snapshot of roles from the latest scan. Used to detect permission changes.
+model GuildRole {
+  id          String   @id // Discord role ID
+  guildId     String
+  guild       Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name        String
+  position    Int
+  permissions String
+  managed     Boolean  @default(false)
+  botId       String?
+  color       Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@index([guildId])
+}
+
+// ───────────────────────── Inventory ─────────────────────────
+
+model BotInventory {
+  id                  String    @id @default(cuid())
+  guildId             String
+  guild               Guild     @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  botUserId           String
+  username            String
+  globalName          String?
+  avatar              String?
+  verified            Boolean?
+  isIntegris          Boolean   @default(false)
+  roleIds             String[]  @default([])
+  highestRoleId       String?
+  highestRoleName     String?
+  highestRolePosition Int?
+  permissions         String    @default("0")
+  isAdministrator     Boolean   @default(false)
+  channelElevations   Json      @default("[]")
+  riskLevel           RiskLevel @default(NONE)
+  isPresent           Boolean   @default(true)
+  addedById           String?
+  addedByName         String?
+  firstSeenAt         DateTime  @default(now())
+  lastSeenAt          DateTime  @default(now())
+  joinedAt            DateTime?
+  removedAt           DateTime?
+  lastEventAt         DateTime?
+  lastEventSummary    String?
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([guildId, botUserId])
+  @@index([guildId, isPresent])
+}
+
+/// Webhooks visible through the Discord API. Tokens and URLs are never stored.
+model WebhookInventory {
+  id                String        @id @default(cuid())
+  guildId           String
+  guild             Guild         @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  webhookId         String
+  name              String?
+  type              Int
+  channelId         String?
+  channelName       String?
+  avatar            String?
+  applicationId     String?
+  creatorId         String?
+  creatorName       String?
+  creatorIsBot      Boolean?
+  sourceGuildName   String?
+  sourceChannelName String?
+  status            WebhookStatus @default(ACTIVE)
+  configHash        String
+  firstSeenAt       DateTime      @default(now())
+  lastSeenAt        DateTime      @default(now())
+  lastChangedAt     DateTime?
+  lastChangeSummary String?
+  deletedAt         DateTime?
+  updatedAt         DateTime      @updatedAt
+
+  @@unique([guildId, webhookId])
+  @@index([guildId, status])
+  @@index([guildId, channelId])
+}
+
+/// A local, per-guild approval. Not proof that an integration is safe.
+model TrustedIntegration {
+  id                  String          @id @default(cuid())
+  guildId             String
+  guild               Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  kind                IntegrationKind
+  targetId            String
+  protected           Boolean         @default(false)
+  note                String?
+  /// Bot permissions at trust time; a later increase still alerts.
+  permissionsSnapshot String?
+  trustedById         String
+  createdAt           DateTime        @default(now())
+
+  @@unique([guildId, kind, targetId])
+}
+
+model IntegrationNote {
+  id        String          @id @default(cuid())
+  guildId   String
+  guild     Guild           @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  kind      IntegrationKind
+  targetId  String
+  body      String
+  authorId  String
+  createdAt DateTime        @default(now())
+
+  @@index([guildId, kind, targetId])
+}
+
+// ───────────────────────── Findings, alerts, events ─────────────────────────
+
+model SecurityFinding {
+  id             String        @id @default(cuid())
+  guildId        String
+  guild          Guild         @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  ruleId         String
+  fingerprint    String
+  severity       Severity
+  title          String
+  description    String
+  recommendation String
+  targetType     ResourceType
+  targetId       String
+  targetName     String?
+  evidence       Json
+  evidenceHash   String
+  status         FindingStatus @default(OPEN)
+  statusChangedById String?
+  firstSeenAt    DateTime      @default(now())
+  lastSeenAt     DateTime      @default(now())
+  resolvedAt     DateTime?
+  autoResolved   Boolean       @default(false)
+
+  alerts SecurityAlert[]
+
+  @@unique([guildId, fingerprint])
+  @@index([guildId, status, severity])
+  @@index([guildId, targetType, targetId])
+}
+
+model SecurityAlert {
+  id                 String        @id @default(cuid())
+  guildId            String
+  guild              Guild         @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  findingId          String?
+  finding            SecurityFinding? @relation(fields: [findingId], references: [id], onDelete: SetNull)
+  dedupKey           String
+  severity           Severity
+  title              String
+  description        String
+  recommendation     String
+  resourceType       ResourceType
+  resourceId         String?
+  resourceName       String?
+  evidence           Json
+  status             AlertStatus   @default(OPEN)
+  occurrences        Int           @default(1)
+  createdAt          DateTime      @default(now())
+  lastOccurredAt     DateTime      @default(now())
+  acknowledgedAt     DateTime?
+  acknowledgedById   String?
+  resolvedAt         DateTime?
+  resolvedById       String?
+  deliveredAt        DateTime?
+  deliveryChannelId  String?
+  deliveryMessageId  String?
+  deliveryError      String?
+
+  @@index([guildId, status, createdAt])
+  @@index([guildId, dedupKey])
+}
+
+model AuditEvent {
+  id         String         @id @default(cuid())
+  guildId    String
+  guild      Guild          @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  type       AuditEventType
+  source     EventSource
+  severity   Severity       @default(INFO)
+  actorId    String?
+  actorName  String?
+  targetType ResourceType?
+  targetId   String?
+  targetName String?
+  summary    String
+  details    Json           @default("{}")
+  /// Idempotency key: the same upstream event is never recorded twice.
+  dedupKey   String?
+  occurredAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  @@unique([guildId, dedupKey])
+  @@index([guildId, occurredAt])
+  @@index([guildId, targetType, targetId, occurredAt])
+}
+
+model ScanJob {
+  id            String      @id @default(cuid())
+  guildId       String
+  guild         Guild       @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  trigger       ScanTrigger
+  status        ScanStatus  @default(QUEUED)
+  requestedById String?
+  attempts      Int         @default(0)
+  stats         Json?
+  error         String?
+  createdAt     DateTime    @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+
+  @@index([guildId, createdAt])
+  @@index([status])
+}
+
+/// Survives guild deletion so destructive data removal stays auditable.
+model DataDeletionLog {
+  id            String    @id @default(cuid())
+  guildId       String
+  guildName     String
+  requestedById String
+  requestedAt   DateTime  @default(now())
+  completedAt   DateTime?
+  leftGuild     Boolean   @default(false)
+
+  @@index([guildId])
+}
