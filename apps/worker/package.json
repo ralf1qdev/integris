@@ -1,0 +1,28 @@
+{
+  "name": "@integris/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch --clear-screen=false src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsup",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@discordjs/rest": "^2.6.3",
+    "@integris/database": "workspace:*",
+    "@integris/security": "workspace:*",
+    "@integris/shared": "workspace:*",
+    "bullmq": "^5.81.5",
+    "discord-api-types": "^0.38.56",
+    "dotenv": "^16.6.1",
+    "ioredis": "^5.11.1"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.15",
+    "vitest": "^3.2.7"
+  }
+}

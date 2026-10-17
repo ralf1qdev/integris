@@ -54,6 +54,7 @@ export const gatewaySignalSchema = z.discriminatedUnion("type", [
     entryId: snowflakeSchema,
     actionType: z.number().int(),
     executorId: snowflakeSchema.nullable(),
+    executorName: z.string().max(100).nullable(),
     targetId: z.string().nullable(),
     reason: z.string().max(512).nullable(),
   }),
@@ -63,8 +64,10 @@ export type GatewaySignal = z.infer<typeof gatewaySignalSchema>;
 export const alertDeliverySchema = z.object({
   guildId: snowflakeSchema,
   alertId: z.string().min(1),
+  /** deliver: post a new message. sync: edit the delivered message after a status change. */
+  mode: z.enum(["deliver", "sync"]).default("deliver"),
 });
-export type AlertDeliveryData = z.infer<typeof alertDeliverySchema>;
+export type AlertDeliveryData = z.input<typeof alertDeliverySchema>;
 
 export const maintenanceJobSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("schedule-scans") }),
